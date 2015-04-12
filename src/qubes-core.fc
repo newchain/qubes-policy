@@ -26,7 +26,9 @@ define(`qubes_userspace_range',
 
 /etc/rc\.d/init\.d/net\.qubes		--	gen_context(system_u:object_r:qubes-net_initrc_exec_t,mls_systemlow-mls_systemhigh)
 /etc/rc\.d/init\.d/qubes-core		--	gen_context(system_u:object_r:qubes-core_initrc_exec_t,mls_systemlow-mls_systemhigh)
-/etc/rc\.d/init\.d/qubes-iptables	--	gen_context(system_u:object_r:qubes-iptables_initrc_exec_t,mls_systemlow-mls_systemhigh)
+/etc/rc\.d/init\.d/qubes-firewall	--	gen_context(system_u:object_r:qubes-firewall_initrc_exec_t,qubes_userspace_range)
+/etc/rc\.d/init\.d/qubes-iptables	--	gen_context(system_u:object_r:qubes-iptables_initrc_exec_t,qubes_userspace_range)
+/etc/rc\.d/init\.d/qubes-netwatcher	--	gen_context(system_u:object_r:qubes-netwatcher_initrc_exec_t,mls_systemlow-mls_systemhigh)
 /etc/rc\.d/init\.d/qubes-network	--	gen_context(system_u:object_r:qubes-network_initrc_exec_t,mls_systemlow-mls_systemhigh)
 /etc/rc\.d/init\.d/qubes-qrexec-agent	--	gen_context(system_u:object_r:qrexec-agent_initrc_exec_t,mls_systemlow-mls_systemhigh)
 /etc/rc\.d/init\.d/qubes-random-seed	--	gen_context(system_u:object_r:qubes-random-seed_initrc_exec_t,mls_systemlow-mls_systemhigh)
@@ -74,6 +76,8 @@ HOME_DIR/QubesIncoming(/.*)?			gen_context(system_u:object_r:qubes_shared_home_t
 
 /usr/local\.orig(/.*)?				gen_context(system_u:object_r:qubes_origin_t,mls_systemlow)
 
+/usr/sbin/qubes-firewall		--	gen_context(system_u:object_r:qubes-firewall_exec_t,qubes_userspace_range)
+/usr/sbin/qubes-netwatcher		--	gen_context(system_u:object_r:qubes-netwatcher_exec_t,qubes_userspace_range)
 /usr/sbin/qubesdb-daemon		--	gen_context(system_u:object_r:qubesdb_exec_t,qubes_userspace_innerrange)
 
 /var/lib/qubes(/.*)?				gen_context(system_u:object_r:qubes_var_lib_t,qubes_userspace_range)

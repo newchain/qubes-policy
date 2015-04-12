@@ -340,6 +340,29 @@ interface(`qubes_core_setup_ip_domtrans',`
 
 ###############################
 ## <summary>
+##	Transition to setup-ip_t without promiscuous IPC
+## </summary>
+## <param name="domain">
+##	<summary>
+##		Domain to permit transition.
+##	</summary>
+## </param>
+
+interface(`qubes_core_setup_ip_auto_domtrans',`
+
+	gen_require(`
+
+		type setup-ip_t;
+		type setup-ip_exec_t;
+	')
+
+	qubes_core_search_qubes_rpc_worker_exec($1)
+	domain_transition_pattern($1, setup-ip_exec_t, setup-ip_t)
+')
+
+
+###############################
+## <summary>
 ##	Search qubes log dir.
 ## </summary>
 ## <param name="domain">
