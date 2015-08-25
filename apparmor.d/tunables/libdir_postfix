@@ -1,0 +1,2 @@
+@{libdir_postfix}=/{32,64,*-linux-gnu*}
+

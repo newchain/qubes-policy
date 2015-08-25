@@ -1,0 +1,34 @@
+#include <tunables/global>
+
+/usr/bin/qrexec-fork-server {
+
+	/bin/@{system_shell}		PUx,
+
+
+	/dev/null			rw,
+	/dev/xen/evtchn			rw,
+	/dev/xen/gntdev			rw,
+	/dev/xen/xenbus			rw,
+
+
+	/etc/ld.so.cache			r,
+
+
+owner	/home/@{qubes_user}/.xsession-errors	w,
+
+
+	#include <abstractions/libvchan-xen>
+
+	/lib@{libdir_postfix}/ld-2.??.so	mr,
+	/lib@{libdir_postfix}/libc-2.??.so	mr,
+	/lib@{libdir_postfix}/libdl-2.??.so	mr,
+	/lib@{libdir_postfix}/libgcc_s.so.1	mr,
+
+	/usr/lib/libqrexec-utils.so.1		mr,
+
+
+	/proc/xen/privcmd			rw,
+
+
+	/run/qubes/qrexec-server.user.sock	rw,
+}

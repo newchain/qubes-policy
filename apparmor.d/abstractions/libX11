@@ -1,0 +1,6 @@
+/usr/lib@{libdir_postfix}/libX11.so.*		mr,
+  /usr/lib@{libdir_postfix}/libxcb.so.*		mr,
+    /usr/lib@{libdir_postfix}/libXau.so.*	mr,
+    /usr/lib@{libdir_postfix}/libXdmcp.so.*	mr,
+  /lib@{libdir_postfix}/libc-2.??.so		mr,
+  /lib@{libdir_postfix}/libdl-2.??.so		mr,

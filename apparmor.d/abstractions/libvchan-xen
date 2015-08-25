@@ -1,0 +1,5 @@
+/usr/lib/libvchan-xen.so		mr,
+  /usr/lib@{libdir_postfix}/libxenvchan.so.*	mr,
+    /usr/lib@{libdir_postfix}/libxenstore.so.*	mr,
+      /lib@{libdir_postfix}/libpthread-2.??.so	mr,
+  /usr/lib@{libdir_postfix}/libxenctrl.so.*	mr,

@@ -1,0 +1,2 @@
+@{login_shell}=bash
+@{system_shell}=dash

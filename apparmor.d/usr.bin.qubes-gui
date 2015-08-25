@@ -1,0 +1,46 @@
+#include <tunables/global>
+
+/usr/bin/qubes-gui flags=(complain) {
+
+#	/bin/@{login_shell}		CUx -> sh,
+	/bin/@{login_shell}		CUx,
+
+
+	/dev/null				rw,
+owner	/dev/xen/evtchn				rw,
+owner	/dev/xen/gntalloc			rw,
+owner	/dev/xen/xenbus				rw,
+
+
+	/etc/ld.so.cache			r,
+
+
+	/lib@{libdir_postfix}/ld-2.??.so	mr,
+
+
+	#include <abstractions/libX11>
+	#include <abstractions/libvchan-xen>
+
+	/usr/lib@{libdir_postfix}/libXcomposite.so.*	mr,
+	/usr/lib@{libdir_postfix}/libXdamage.so.*	mr,
+	/usr/lib@{libdir_postfix}/libXfixes.so.*	mr,
+
+audit	/usr/lib@{libdir_postfix}/libqubesdb.so		mr,
+	/usr/lib/libqubesdb.so				mr,
+
+
+owner	@{PROC}/xen/privcmd			rw,
+
+
+	/tmp/.X11-unix/X0			rw,
+
+
+	/usr/share/X11/locale/C/XLC_LOCALE	r,
+	/usr/share/X11/locale/locale.alias	r,
+	/usr/share/X11/locale/locale.dir	r,
+
+	/var/log/qubes/gui-agent.log		w,
+
+
+	/run/xf86-qubes-socket		wr,
+}

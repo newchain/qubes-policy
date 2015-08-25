@@ -1,0 +1,119 @@
+#include <tunables/global>
+
+
+/usr/lib/qubes/qrexec-agent {
+
+	/bin/su			Cx -> su,
+
+	/dev/null		rw,
+	/dev/urandom		r,
+owner	/dev/xen/evtchn		rw,
+owner	/dev/xen/gntalloc	rw,
+owner	/dev/xen/gntdev		rw,
+owner	/dev/xen/xenbus		rw,
+
+	/etc/ld.so.cache	r,
+
+	/lib@{libdir_postfix}/ld-2.??.so		mr,
+	/lib@{libdir_postfix}/libc-2.??.so		mr,
+	/lib@{libdir_postfix}/libgcc_s.so.1		mr,
+	/usr/lib/libqrexec-utils.so.1			mr,
+	/usr/lib@{libdir_postfix}/libxenvchan.so.*	mr,
+	  /usr/lib@{libdir_postfix}/libxenctrl.so.*	mr,
+	    /lib@{libdir_postfix}/libdl-2.??.so		mr,
+	    /usr/lib@{libdir_postfix}/libxenstore.so.*	mr,
+	      /lib@{libdir_postfix}/libpthread-2.??.so	mr,
+	/usr/lib/libvchan-xen.so			mr,
+
+owner	@{PROC}/xen/privcmd			rw,
+
+owner	/run/qubes/qrexec-agent			rw,
+
+	/var/log/qubes/qrexec-agent.log		a,
+
+
+	# For what?
+	#
+audit	capability dac_override,
+
+
+	profile su {
+
+		# https://bugs.launchpad.net/apparmor/+bug/1334455
+		# :(
+		#
+		/bin/{bash,dash,sh}		Cux -> sh,
+		/bin/su				r,
+
+		/etc/default/locale		r,
+		/etc/group			r,
+		/etc/ld.so.cache		r,
+		/etc/nsswitch.conf		r,
+		  /lib@{libdir_postfix}/libnss_compat-2.??.so	mr,
+		  /lib@{libdir_postfix}/libnsl-2.??.so		mr,
+		  /lib@{libdir_postfix}/libnss_files-2.??.so	mr,
+		  /lib@{libdir_postfix}/libnss_nis-2.??.so	mr,
+
+		/etc/pam.d/common-account	r,
+		/etc/pam.d/common-auth		r,
+		/etc/pam.d/common-other		r,
+		/etc/pam.d/common-password	r,
+		/etc/pam.d/common-session	r,
+		/etc/pam.d/other		r,
+		/etc/pam.d/su			r,
+deny		/etc/localtime			r,
+		/etc/login.defs			r,
+		/etc/passwd			r,
+		/etc/shadow			r,
+
+		/lib@{libdir_postfix}/security/pam_rootok.so		mr,
+		/lib@{libdir_postfix}/libselinux.so.1			mr,
+		/lib@{libdir_postfix}/security/pam_cap.so		mr,
+		  /lib@{libdir_postfix}/libcap.so.*			mr,
+		  /lib@{libdir_postfix}/libattr.so.*			mr,
+		/lib@{libdir_postfix}/security/pam_ck_connector.so	mr,
+		  /usr/lib@{libdir_postfix}/libck-connector.so.*	mr,
+		/lib@{libdir_postfix}/security/pam_deny.so		mr,
+		/lib@{libdir_postfix}/security/pam_env.so		mr,
+		  /etc/environment					r,
+		  /etc/security/pam_env.conf				r,
+		/lib@{libdir_postfix}/security/pam_exec.so		mr,
+		/lib@{libdir_postfix}/security/pam_mail.so		mr,
+		/lib@{libdir_postfix}/security/pam_permit.so		mr,
+		/lib@{libdir_postfix}/security/pam_systemd.so		mr,
+		  /lib@{libdir_postfix}/libdbus-1.so.*			mr,
+		/lib@{libdir_postfix}/security/pam_unix.so		mr,
+		/lib@{libdir_postfix}/libcrypt-2.??.so			mr,
+
+		/lib@{libdir_postfix}/ld-2.??.so		mr,
+		/lib@{libdir_postfix}/libpam.so.*		mr,
+		/lib@{libdir_postfix}/libpam_misc.*		mr,
+		/lib@{libdir_postfix}/libc-2.??.so		mr,
+		/lib@{libdir_postfix}/libdl-2.??.so		mr,
+		/lib@{libdir_postfix}/libpthread-2.??.so	mr,
+		/lib@{libdir_postfix}/librt-2.??.so		mr,
+
+		/lib/security/pam_gnome_keyring.so	mr,
+
+		@{PROC}/1/environ		r,
+deny		@{PROC}/[1-9]*/filesystems	r,
+		@{PROC}/[1-9]*/loginuid		r,
+deny		@{PROC}/[1-9]*/mounts		r,
+deny		@{PROC}/filesystems		r,
+		@{PROC}/sys/kernel/ngroups_max	r,
+
+		/run/utmp			rk,
+
+		capability setgid,
+		capability setuid,
+		#
+		# huh =/
+		#
+		capability sys_ptrace,
+
+#		profile sh flags=(complain) {
+#	
+#			#include <local/login_shell>
+#		}
+	}
+}
