@@ -64,8 +64,6 @@ interface(`qubes_gpg_import_key_role',`
 ###############################
 ## <summary>
 ##	Allow transition to qubes-gpg-import-key_t.
-role to use split gpg-client
-## </summary>
 ## <param name="domain">
 ##	<summary>
 ##		Domain to permit transition.
