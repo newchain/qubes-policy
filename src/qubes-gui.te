@@ -133,10 +133,6 @@ xserver_domtrans_xauth(qrexec-agent_su_t)
 # qubes-gui_t local policy
 #
 
-# Note: qubes_u2mfn_t requires patch to base policy, hence proc_t.
-#
-allow qubes-gui_t { proc_t qubes_u2mfn_t } : file { read write open ioctl };
-
 filetrans_pattern(qubes-gui_t, var_run_t, qubes-gui_var_run_t, sock_file, "xf86-qubes-socket")
 allow qubes-gui_t qubes-gui_var_run_t : sock_file { create unlink };
 
@@ -175,6 +171,9 @@ dontaudit qubes-gui_t locale_t : file getattr;
 # qubes-gui_initrc_t local policy
 #
 
+allow qubes-gui_initrc_t self : process setrlimit;
+
+
 ifdef(`enable_mls',`
 
 	range_transition qubes-gui_initrc_t qubes-gui_exec_t : process qubes_userspace_range;
@@ -195,6 +194,7 @@ allow qubes-gui_initrc_t qubes-gui_log_t : file { append open };
 qubes_core_create_qubes_var_run_files(qubes-gui_initrc_t)
 qubes_core_write_qubes_var_run_files(qubes-gui_initrc_t)
 qubes_core_delete_qubes_var_run_files(qubes-gui_initrc_t)
+
 
 allow qubes-gui_initrc_t initrc_state_t : dir { create_dir_perms delete_dir_perms };
 
@@ -516,6 +516,9 @@ allow tmpfiles_t qubes-gui_log_t : file { getattr setattr };
 # xserver_t local policy
 #
 
+allow xserver_t qubes_u2mfn_t : file { read open write ioctl };
+#allowxperm xserver_t qubes_u2mfn_t : ioctl 0xF501;
+
 # HOME_DIR/.xsession_errors:
 #
 allow xserver_t qubes-run-xorg_sh_t : fd use;
@@ -532,6 +535,14 @@ qubes_gui_stream_write(xserver_t)
 #
 qubes_gui_use_fds(xserver_t)
 
+#ifdef(`enable_mls',`
+
+	# Make it a little bit harder for anything
+	# but xserver to write to u2mfn by making
+	# qubes_u2mfn_t qubes_userspace_limit...
+	#
+#	mls_trusted_object(qubes_u2mfn_t)
+#')
 
 ########################################
 #

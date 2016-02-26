@@ -10,6 +10,7 @@ gen_require(`
 	role user_r;
 
 	type configfs_t;
+	type initrc_t;
 	type kernel_t;
 	type shell_exec_t;
 	type su_exec_t;
@@ -126,6 +127,10 @@ role system_r types qrexec-agent_t;
         corecmd_bin_entry_type(qubes-rpc-multiplexer_worker_t)
         role system_r types qubes-rpc-multiplexer_worker_t;
 
+type qrexec-fork-server_t;
+type qrexec-fork-server_exec_t;
+application_domain(qrexec-fork-server_t, qrexec-fork-server_exec_t)
+
 attribute qrexec-client-vm_domain;
 
   attribute qrexec-client-vm_sh_domain;
@@ -153,9 +158,21 @@ init_script_domain(qrexec-agent_initrc_t, qrexec-agent_initrc_exec_t)
 type qrexec-agent_log_t;
 logging_log_file(qrexec-agent_log_t)
 
+type qrun-in-vm_t;
+type qrun-in-vm_exec_t;
+application_domain(qrun-in-vm_t, qrun-in-vm_exec_t)
+
 type qubes-core_initrc_t, fixed_disk_raw_read, qubes_init_domain;
 type qubes-core_initrc_exec_t;
 init_script_domain(qubes-core_initrc_t, qubes-core_initrc_exec_t)
+
+type qubes-iptables_initrc_t, qubes_init_domain;
+type qubes-iptables_initrc_exec_t;
+files_type(qubes-iptables_initrc_exec_t)
+init_script_domain(qubes-iptables_initrc_t, qubes-iptables_initrc_exec_t)
+
+type qubes-iptables_etc_t;
+files_config_file(qubes-iptables_etc_t)
 
 type qubes-net_initrc_t, qubes_init_domain;
 type qubes-net_initrc_exec_t;
@@ -213,6 +230,25 @@ files_tmp_file(qubes_rpc_stderror_t)
 type qubes_rpc_worker_t;
 type qubes_rpc_worker_exec_t;
 init_system_domain(qubes_rpc_worker_t, qubes_rpc_worker_exec_t)
+
+type qubes-service_initrc_t, qubes_init_domain;
+type qubes-service_initrc_exec_t;
+init_script_domain(qubes-service_initrc_t, qubes-service_initrc_exec_t)
+
+  type qubes-service_t;
+  type qubes-service_exec_t;
+  application_domain(qubes-service_t, qubes-service_exec_t)
+  role system_r types qubes-service_t;
+
+    # { cut grep touch }
+    #
+    type qubes-service_worker_t;
+    application_type(qubes-service_worker_t)
+    corecmd_bin_entry_type(qubes-service_worker_t)
+    role system_r types qubes-service_worker_t;
+
+type qubes-service_var_run_t;
+files_type(qubes-service_var_run_t)
 
 type qubes_shared_home_t;
 userdom_user_home_content(qubes_shared_home_t)
@@ -707,6 +743,34 @@ delete_files_pattern(qubes_init_domain, initrc_state_t, initrc_state_t)
 allow qubes_init_domain initrc_state_t : lnk_file { create_lnk_file_perms read_lnk_file_perms delete_lnk_file_perms };
 
 
+########################################
+#
+# qubes-iptables_initrc_t local policy
+#
+
+iptables_domtrans(qubes-iptables_initrc_t)
+sysnet_domtrans_ifconfig(qubes-iptables_initrc_t)
+
+init_read_script_files(qubes-iptables_initrc_t)
+init_dontaudit_read_all_script_files(qubes-iptables_initrc_t)
+
+# cmdline
+#
+kernel_dontaudit_read_system_state(qubes-iptables_initrc_t)
+
+qubes_core_qubesdb_cmd_domtrans(qubes-iptables_initrc_t)
+
+userdom_dontaudit_search_user_home_dirs(qubes-iptables_initrc_t)
+
+
+allow qubes-iptables_initrc_t initrc_state_t : dir { create_dir_perms delete_dir_perms };
+allow qubes-iptables_initrc_t qubes-iptables_etc_t : file { getattr read open };
+
+# Dependency: before net
+#
+allow qubes-iptables_initrc_t qubes-net_initrc_exec_t : file { read getattr execute open };
+
+
 #########################################
 #
 # qubes-net_initrc_t local policy
@@ -730,9 +794,10 @@ sysnet_domtrans_ifconfig(qubes-net_initrc_t)
 userdom_dontaudit_search_user_home_dirs(qubes-net_initrc_t)
 
 
-# Dependency: need qubesdb-daemon
+# Dependency: need qubesdb-daemon, qubes-iptables
 #
 allow qubes-net_initrc_t qubesdb_initrc_exec_t : file { getattr execute };
+allow qubes-net_initrc_t qubes-iptables_initrc_exec_t : file execute;
 
 
 #########################################
@@ -856,6 +921,91 @@ allow qubes-rpc-multiplexer_worker_t qubes-rpc-multiplexer_sh_t : process sigchl
 
 #########################################
 #
+# qubes-service_t local policy
+#
+
+allow qubes-service_t self : fifo_file read;
+
+
+corecmd_bin_domtrans(qubes-service_t, qubes-service_worker_t)
+
+files_dontaudit_read_etc_files(qubes-service_t)
+
+kernel_dontaudit_read_system_state(qubes-service_t)
+
+qubes_core_bluepill_locale(qubes-service_t)
+
+qubes_core_qubesdb_cmd_domtrans(qubes-service_t)
+
+qubes_core_search_qubes_rpc_worker_exec(qubes-service_t)
+
+
+# shell bin
+#
+allow qubes-service_t qubes-service_initrc_t : fd use;
+allow qubes-service_t qubes-service_initrc_t : process sigchld;
+allow qubes-service_t qubes-service_var_run_t : dir search;
+allow qubes-service_t shell_exec_t : file read;
+
+
+#########################################
+#
+# qubes-service_initrc_t local policy
+#
+
+domain_auto_transition_pattern(qubes-service_initrc_t, qubes-service_exec_t, qubes-service_t)
+ifdef(`enable_mls',`
+
+	range_transition qubes-service_initrc_t qubes-service_exec_t : process qubes_userspace_range;
+')
+
+init_read_script_files(qubes-service_initrc_t)
+init_dontaudit_read_all_script_files(qubes-service_initrc_t)
+
+kernel_dontaudit_read_system_state(qubes-service_initrc_t)
+
+qubes_core_bluepill_locale(qubes-service_initrc_t)
+
+qubes_core_search_qubes_rpc_worker_exec(qubes-service_initrc_t)
+
+userdom_dontaudit_search_user_home_dirs(qubes-service_initrc_t)
+
+
+# dependency: need qubesdb-daemon
+#
+allow qubes-service_initrc_t qubesdb_initrc_exec_t : file getattr;
+
+
+#########################################
+#
+# qubes-service_worker_t local policy
+#
+
+qubes_core_bluepill_locale(qubes-service_worker_t)
+
+
+allow qubes-service_worker_t qubes-service_t : process sigchld;
+#
+# { pipe null bin }
+#
+allow qubes-service_worker_t qubes-service_t : fd use;
+
+allow qubes-service_worker_t qubes-service_t : fifo_file { read write getattr ioctl };
+#allowxperm qubes-service_worker_t qubes-service_t : fifo_file ioctl 0x5401;
+
+# null
+#
+allow qubes-service_worker_t qubes-service_initrc_t : fd use;
+
+# { touch rm }
+#
+allow qubes-service_worker_t qubes-service_var_run_t : dir { search write add_name remove_name };
+allow qubes-service_worker_t qubes-service_var_run_t : file { create unlink };
+dontaudit qubes-service_worker_t qubes-service_var_run_t : file { write open };
+
+
+#########################################
+#
 # qubesdb_t local policy
 #
 
@@ -901,6 +1051,7 @@ fs_search_xenfs(qubesdb_t)
 # /proc/xen/privcmd:
 #
 allow qubesdb_t xenfs_t : file { read open write ioctl };
+#allowxperm qubesdb_t xenfs_t : file ioctl 0x5000;
 
 
 #########################################
@@ -946,6 +1097,13 @@ qubes_core_read_qubes_var_run_files(qubesdb_initrc_t)
 
 kernel_list_proc(qubesdb_initrc_t)
 allow qubesdb_initrc_t qubesdb_t : process { signal signull };
+
+
+#allow qubesdb_initrc_t qubesdb_t : dir { getattr search };
+#
+# ( cmdline | status )
+#
+#allow qubesdb_initrc_t qubesdb_t : file { read open };
 
 
 #########################################
@@ -1179,12 +1337,17 @@ allow tmpfiles_t qubes_shared_home_t : dir { getattr setattr };
 
 filetrans_add_pattern(tmpfiles_t, tmp_t, user_tmp_t, dir, "root")
 filetrans_add_pattern(tmpfiles_t, tmp_t, user_tmp_t, dir, "user")
+
 files_pid_filetrans(tmpfiles_t, qubes_var_run_t, dir, "qubes")
+allow tmpfiles_t qubes_var_run_t : dir { create getattr setattr };
+
+files_pid_filetrans(tmpfiles_t, qubes-service_var_run_t, dir, "qubes-service")
+allow tmpfiles_t qubes-service_var_run_t : dir { create getattr setattr };
 
 allow tmpfiles_t qubes_persistent_t : dir search;
 allow tmpfiles_t qubes_persistent_config_t : dir { getattr search };
 
-allow tmpfiles_t { proc_t qubes_u2mfn_t } : file setattr;
+allow tmpfiles_t { proc_t qubes_u2mfn_t } : file { getattr setattr };
 
 fs_search_xenfs(tmpfiles_t)
 allow tmpfiles_t xenfs_t : dir getattr;
@@ -1199,6 +1362,10 @@ allow tmpfiles_t qrexec-agent_log_t : file { create write open getattr setattr }
 qubes_core_qubes_log_filetrans(tmpfiles_t, qubesdb_log_t, file, "qubesdb.log")
 allow tmpfiles_t qubesdb_log_t : file { getattr setattr };
 range_transition tmpfiles_t qubesdb_log_t : file qubes_qubesdb_level;
+#ifdef(`enable_mls',`
+#
+#	mls_file_upgrade(tmpfiles_t)
+#')
 
 
 #########################################
@@ -1270,7 +1437,7 @@ range_transition tmpfiles_t qubesdb_log_t : file qubes_qubesdb_level;
 	# the user will know what they're opening.
 	#
 	qubes_core_setattr_qubes_shared_home_files(qfile-unpacker_t)
-	allow qfile-unpacker_t qubes_shared_home_t : dir setattr;
+	allow qfile-unpacker_t qubes_shared_home_t : dir { setattr read };
 	allow qfile-unpacker_t qubes_shared_home_t : lnk_file { create read write append setattr getattr unlink };
 
 	qubes_core_rw_inherited_qrexec_agent_pipes(qfile-unpacker_t)

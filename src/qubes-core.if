@@ -273,6 +273,50 @@ interface(`qubes_core_bluepill_locale',`
 
 ###############################
 ## <summary>
+##	Search /run/qubes-service
+## </summary>
+## <param name="domain">
+##	<summary>
+##		Domain to permit search.
+##	</summary>
+## </param>
+
+interface(`qubes_core_search_qubes_service_var_run',`
+
+	gen_require(`
+
+		type qubes-service_var_run_t;
+	')
+
+	allow $1 qubes-service_var_run_t : dir search_dir_perms;
+')
+
+
+###############################
+## <summary>
+##	<p>
+##		Check read permission on files under /run/qubes-service/
+##	</p>
+##	<p>
+##		Typically this would be used by init scripts.
+##	</p>
+## </summary>
+## <param name="domain">
+##	<summary>
+##		Domain to permit search.
+##	</summary>
+## </param>
+
+interface(`qubes_core_read_inherited_qubes_service_var_run',`
+
+	qubes_core_search_qubes_service_var_run($1)
+
+	allow $1 qubes-service_var_run_t : file read;
+')
+
+
+###############################
+## <summary>
 ##	Transition to setup-ip_t
 ## </summary>
 ## <param name="domain">
