@@ -34,36 +34,38 @@ type qubes-gui_exec_t;
 init_daemon_domain(qubes-gui_t, qubes-gui_exec_t)
 
   type qubes-gui_sh_t;
-  application_type(qubes-gui_sh_t)
+  domain_type(qubes-gui_sh_t)
   corecmd_shell_entry_type(qubes-gui_sh_t)
   role system_r types qubes-gui_sh_t;
 
     type qubes-run-xorg_t;
+    domain_type(qubes-run-xorg_t)
     type qubes-run-xorg_exec_t;
-    application_domain(qubes-run-xorg_t, qubes-run-xorg_exec_t)
+    domain_entry_file(qubes-run-xorg_t, qubes-run-xorg_exec_t)
     role system_r types qubes-run-xorg_t;
 
       type qubes-run-xorg_su_t;
-      application_domain(qubes-run-xorg_su_t, su_exec_t)
+      domain_type(qubes-run-xorg_su_t)
+      domain_entry_file(qubes-run-xorg_su_t, su_exec_t)
       role system_r types qubes-run-xorg_su_t;
 
         type qubes-run-xorg_sh_t;
-        application_type(qubes-run-xorg_sh_t)
+        domain_type(qubes-run-xorg_sh_t)
         corecmd_shell_entry_type(qubes-run-xorg_sh_t)
         role system_r types qubes-run-xorg_sh_t;
 
           type qubes-run-xorg_xinit_t;
-          application_type(qubes-run-xorg_xinit_t)
+          domain_type(qubes-run-xorg_xinit_t)
           corecmd_bin_entry_type(qubes-run-xorg_xinit_t)
           role system_r types qubes-run-xorg_xinit_t;
 
             type qubes-run-xorg_xinitrc_t;
-            application_type(qubes-run-xorg_xinitrc_t)
+            domain_type(qubes-run-xorg_xinitrc_t)
             corecmd_shell_entry_type(qubes-run-xorg_xinitrc_t)
             role system_r types qubes-run-xorg_xinitrc_t;
 
               type qubes-run-xorg_xinitrc_worker_t;
-              application_type(qubes-run-xorg_xinitrc_worker_t)
+              domain_type(qubes-run-xorg_xinitrc_worker_t)
               corecmd_bin_entry_type(qubes-run-xorg_xinitrc_worker_t)
               role system_r types qubes-run-xorg_xinitrc_worker_t;
 
@@ -72,7 +74,7 @@ init_daemon_domain(qubes-gui_t, qubes-gui_exec_t)
       #
 
       type qubes-run-xorg_worker_t;
-      application_type(qubes-run-xorg_worker_t)
+      domain_type(qubes-run-xorg_worker_t)
       corecmd_bin_entry_type(qubes-run-xorg_worker_t)
       role system_r types qubes-run-xorg_worker_t;
 
@@ -83,13 +85,15 @@ type qubes-gui_initrc_exec_t;
 init_script_domain(qubes-gui_initrc_t, qubes-gui_initrc_exec_t)
 
 type qubes-session_t;
+domain_type(qubes-session_t)
 type qubes-session_exec_t;
-application_domain(qubes-session_t, qubes-session_exec_t)
+domain_entry_file(qubes-session_t, qubes-session_exec_t)
 role system_r types qubes-session_t;
 
 type qubes-set-monitor-layout_t;
+domain_type(qubes-set-monitor-layout_t)
 type qubes-set-monitor-layout_exec_t;
-application_domain(qubes-set-monitor-layout_t, qubes-set-monitor-layout_exec_t)
+domain_entry_file(qubes-set-monitor-layout_t, qubes-set-monitor-layout_exec_t)
 role system_r types qubes-set-monitor-layout_t;
 
   # ( grep | sleep | xrandr )
@@ -218,6 +222,8 @@ allow qubes-gui_initrc_t qubes-gui_t : process { signal signull };
 
 corecmd_read_bin_symlinks(qubes-gui_sh_t)
 
+files_dontaudit_read_etc_files(qubes-gui_sh_t)
+
 # Only meminfo:
 #
 kernel_dontaudit_read_system_state(qubes-gui_sh_t)
@@ -244,6 +250,10 @@ allow qubes-run-xorg_t qubes-gui_etc_t : file { read open write };
 allow qubes-run-xorg_t qubes-gui_sh_t : fd use;
 allow qubes-run-xorg_t shell_exec_t : file read;
 
+
+# nsswitch
+#
+files_dontaudit_read_etc_files(qubes-run-xorg_t)
 
 # Only meminfo:
 #
@@ -535,14 +545,14 @@ qubes_gui_stream_write(xserver_t)
 #
 qubes_gui_use_fds(xserver_t)
 
-#ifdef(`enable_mls',`
+ifdef(`enable_mls',`
 
 	# Make it a little bit harder for anything
 	# but xserver to write to u2mfn by making
 	# qubes_u2mfn_t qubes_userspace_limit...
 	#
-#	mls_trusted_object(qubes_u2mfn_t)
-#')
+	mls_trusted_object(qubes_u2mfn_t)
+')
 
 ########################################
 #
